@@ -4,7 +4,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.couchbase.universitylister.R;
 import com.couchbase.universitylister.adapter.UniversityListAdapter;
@@ -28,16 +31,18 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
+        // Set toolbar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.university_toolbar);
+        setSupportActionBar(toolbar);
+
+        // Get recycler view
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.rvUniversities);
-
-
-        // Load the data from local sample file
-        DataFetcher fetcher = new DataFetcher(this,this);
-        fetcher.execute();
-
-
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Asynchronously Load the data from local sample file
+        DataFetcher fetcher = new DataFetcher(this,this);
+        fetcher.execute();
     }
 
     // Implementing
@@ -68,5 +73,36 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
         }
 
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+
+                // User chose  "Add University"
+                // Now select a random university item from json array and add to the couchbase lite database
+                // In a real application, this would correspond to the case when a user addded a document from
+                // the app or if a document was added at the server (and  replicated to the app )
+                // In either case, the key point is that the local database is getting updated
+                // and this will trigger the livequery callback to fire
+                return true;
+
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+
+        }
+    }
+
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.actions, menu);
+        return true;
     }
 }
