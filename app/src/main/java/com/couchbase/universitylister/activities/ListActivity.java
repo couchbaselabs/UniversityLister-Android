@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -144,12 +145,16 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
                                             while ((row = resultRows.next()) != null) {
                                                 // Fetch corresponding documents
                                                 Document doc = row.getDocument();
+                                                Log.i("LIVE","DOC ADDED"+doc.toString());
 
                                                 // Map the document to University
                                                 University university = new ObjectMapper().convertValue(doc.toMap(),University.class);
                                                 universities.add(university);
 
+
                                             }
+
+
 
                                             // Update the adapter with the newly added University documents
                                             adapter.addUniversities(universities);
@@ -194,6 +199,8 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
             HashMap<String,Object> universityMap = new ObjectMapper().convertValue(university,HashMap.class);
             // Construct the document from university object
             Document doc = new Document(universityMap);
+
+            Log.i("CBL","Will add doc with Id"+ doc.getId());
             // Save document to database.
             dbMgr.database.save(doc);
         }
