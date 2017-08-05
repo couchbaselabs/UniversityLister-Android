@@ -1,11 +1,13 @@
 package com.couchbase.universitylister.data;
 
-import org.json.JSONArray;
+import com.couchbase.universitylister.model.University;
+
+import java.util.List;
 
 /**
  * Created by priya.rajagopal on 8/4/17.
  */
 
 public interface IDataFetchResponse {
-    void postResult(JSONArray jsonData);
+    void postResult(List<University> jsonData);
 }

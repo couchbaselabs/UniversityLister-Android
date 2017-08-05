@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.couchbase.lite.Document;
 import com.couchbase.universitylister.R;
 import com.couchbase.universitylister.model.University;
 
@@ -46,6 +47,9 @@ public class UniversityListAdapter extends RecyclerView.Adapter<UniversityListAd
         return mContext;
     }
 
+    public void addUniversities(List<University> universities) {
+        mUniversities.addAll(universities);
+    }
     public void setUniversities(List<University> universities) {
         mUniversities = universities;
     }

@@ -3,18 +3,30 @@
 buildscript {
     repositories {
         jcenter()
+
+        // For developer builds, use the couchbase maven repo
+        maven {
+            url "http://mobile.maven.couchbase.com/maven2/dev/"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.1'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven {
+            url "http://mobile.maven.couchbase.com/maven2/dev/"
+        }
+        maven {
+            url "https://maven.google.com"
+        }
     }
 }
 

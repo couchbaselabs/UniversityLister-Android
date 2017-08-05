@@ -1,23 +1,28 @@
 package com.couchbase.universitylister.model;
 
-/**
- * Created by priya.rajagopal on 8/3/17.
- */
+import java.util.List;
 
 public class University {
-    private String mName;
-    private String mCountry;
+    private String name;
+    private String country;
 
-    public University(String name, String country) {
-        mName = name;
-        mCountry = country;
+
+    public University() {
+        //
     }
     public String getName() {
-        return mName;
+        return name;
 
     }
     public String getCountry() {
-        return mCountry;
+        return country;
+    }
 
+    public void setName(String name) {
+        this.name = name;
+
+    }
+    public void setCountry(String country) {
+        this.country = country;
     }
 }
