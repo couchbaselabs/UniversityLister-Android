@@ -6,18 +6,10 @@ package com.couchbase.universitylister.data;
 
 import android.content.Context;
 
-import com.couchbase.lite.ConflictResolver;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
-import com.couchbase.lite.DatabaseChangeListener;
 import com.couchbase.lite.DatabaseConfiguration;
-import com.couchbase.lite.Document;
-import com.couchbase.lite.ReplicatorChangeListener;
 import java.io.File;
-import java.util.Map;
-
-
-
 
 public class DatabaseManager  {
 
@@ -40,7 +32,6 @@ public class DatabaseManager  {
             // Create / Open a database with specified name and configuration
             database = new Database(DATABASE_NAME, config);
 
-
         }
         catch (CouchbaseLiteException e) {
             e.printStackTrace();
@@ -48,11 +39,7 @@ public class DatabaseManager  {
 
     }
 
-    public void addItemToDatabase(Map<String,Object> university) {
-        Document document = new Document(university);
-        database.save(document);
 
-    }
 
     public static DatabaseManager getSharedInstance(Context context) {
         if (instance == null) {

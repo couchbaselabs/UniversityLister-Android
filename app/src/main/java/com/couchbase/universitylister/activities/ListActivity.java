@@ -1,5 +1,6 @@
 package com.couchbase.universitylister.activities;
 
+import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -72,29 +73,7 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
         sampleData = jsonData;
 
         // Initialize Query to fetch documents
-        fetchListOfUniversities();
-        /*
-        Log.i("DATA", String.valueOf(jsonData));
-        // You could use any JSON to POJO mapper . Doing it manually here.
-        List<University> universities = new ArrayList<University>();
-
-        try {
-            for (int i = 0; i < sampleData.length(); i++) {
-                JSONObject object = sampleData.getJSONObject(i);
-                String name = object.getString("name");
-                String country = object.getString("country");
-                University university = new University(name, country);
-                universities.add(university);
-
-            }
-            adapter.setUniversities(universities);
-            adapter.notifyDataSetChanged();
-        }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        */
-
+        QueryForListOfUniversities();
 
     }
 
@@ -126,43 +105,35 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
     }
 
 
-    private void fetchListOfUniversities() {
+    private void QueryForListOfUniversities() {
         try {
-            // Create a liveQuery to fetch all documents from database
+            // 1. Create a liveQuery to fetch all documents from database
             query = Query.
                     select().
                     from(DataSource.database(dbMgr.database)).
                     toLive();
 
-            // Add a live query listener to continually monitor for changes
+            // 2. Add a live query listener to continually monitor for changes
             query.addChangeListener(new LiveQueryChangeListener() {
                                         @Override
                                         public void changed(LiveQueryChange change) {
                                             ResultSet resultRows = change.getRows();
                                             QueryRow row;
                                             List<University> universities = new ArrayList<University>();
-                                            // Iterate over changed rows
+                                            // 3. Iterate over changed rows, corresponding documents and map to University POJO
                                             while ((row = resultRows.next()) != null) {
-                                                // Fetch corresponding documents
                                                 Document doc = row.getDocument();
-                                                Log.i("LIVE","DOC ADDED"+doc.toString());
-
-                                                // Map the document to University
                                                 University university = new ObjectMapper().convertValue(doc.toMap(),University.class);
                                                 universities.add(university);
-
-
                                             }
 
-
-
-                                            // Update the adapter with the newly added University documents
-                                            adapter.addUniversities(universities);
+                                            // 4. Update the adapter with the newly added University documents
+                                            adapter.setUniversities(universities);
 
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    // reload adapter
+                                                    // 5. Notify adapter of changed data
                                                     adapter.notifyDataSetChanged();
                                                 }
                                             });
@@ -170,38 +141,44 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
                                         }
                                     }
             );
+            // 6. Run Query
             query.run();
         }
         catch (IllegalArgumentException e) {
 
         }
     }
+
     // Select a random university item from json array and add to the couchbase lite database
     // In a real application, this simulates the case when either a user adds a document from
     // the app or if a document was added at the server and  replicated to the app.
     // In either case, the local database is getting updated and this will trigger  livequery listeners to fire
     private void fetchUniversityAndAddToDatabase() {
         if (sampleData == null) {
+            // The sample data has not yet loaded. So notify user
             AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
             alertBuilder
                     .setMessage(R.string.data_not_fetched)
-                    .setCancelable(true).show();
+                    .setCancelable(true)
+                    .setNegativeButton ("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+
+                            finish();
+                    } }).show();
             return;
 
         }
         Random r = new Random();
         int index = r.nextInt(sampleData.size()-1);
         try {
-            // Get university object at randomly selected index
+            // 1. Get university object at randomly selected index
             University university = sampleData.get(index);
 
-            // Convert University to hashmap
+            // 2. Construct the document from university object
             HashMap<String,Object> universityMap = new ObjectMapper().convertValue(university,HashMap.class);
-            // Construct the document from university object
             Document doc = new Document(universityMap);
 
-            Log.i("CBL","Will add doc with Id"+ doc.getId());
-            // Save document to database.
+            // 3. Save document to database.
             dbMgr.database.save(doc);
         }
         catch ( NullPointerException e) {

@@ -1,25 +1,15 @@
 package com.couchbase.universitylister.data;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.os.AsyncTask;
 
-
 import com.couchbase.universitylister.model.University;
-import com.fasterxml.jackson.core.type.TypeReference;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -44,11 +34,11 @@ public class DataFetcher extends AsyncTask<Void,Void,List<University>> {
         StringBuilder stringBuilder = new StringBuilder();
         List<University> universities = null;
         try {
-            // Load data from local sample data file
+            // 1. Load data from local sample data file
             InputStream inputStream = mContext.getAssets().open(fileName);
+            // 2. use Jackson library to map the JSON to List of University POJO
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             universities = Arrays.asList(mapper.readValue(inputStream, University[].class));
-
             return universities;
         } catch (IOException  e ) {
             e.printStackTrace();
@@ -60,6 +50,7 @@ public class DataFetcher extends AsyncTask<Void,Void,List<University>> {
 
     @Override
     protected void onPostExecute(List<University> result) {
+        // 3. Notify the IDataFetchResponse delegate (which in this case is ListActivity) of the availability of data
         mDelegate.postResult(result);
 
     }
