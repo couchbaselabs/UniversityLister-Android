@@ -11,25 +11,35 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.DataSource;
+import com.couchbase.lite.Dictionary;
 import com.couchbase.lite.Document;
 import com.couchbase.lite.LiveQuery;
 import com.couchbase.lite.LiveQueryChange;
 import com.couchbase.lite.LiveQueryChangeListener;
 import com.couchbase.lite.Query;
-import com.couchbase.lite.QueryRow;
+import com.couchbase.lite.ReadOnlyDictionary;
+import com.couchbase.lite.Result;
 import com.couchbase.lite.ResultSet;
+import com.couchbase.lite.Expression;
+import com.couchbase.lite.Ordering;
+import com.couchbase.lite.Query;
+import com.couchbase.lite.SelectResult;
 import com.couchbase.universitylister.R;
 import com.couchbase.universitylister.adapter.UniversityListAdapter;
 import com.couchbase.universitylister.data.DataFetcher;
 import com.couchbase.universitylister.data.DatabaseManager;
 import com.couchbase.universitylister.data.IDataFetchResponse;
 import com.couchbase.universitylister.model.University;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class ListActivity extends AppCompatActivity implements IDataFetchResponse {
@@ -107,9 +117,11 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
 
     private void QueryForListOfUniversities() {
         try {
+
+
             // 1. Create a liveQuery to fetch all documents from database
             query = Query.
-                    select().
+                    select(SelectResult.all()).
                     from(DataSource.database(dbMgr.database)).
                     toLive();
 
@@ -117,13 +129,20 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
             query.addChangeListener(new LiveQueryChangeListener() {
                                         @Override
                                         public void changed(LiveQueryChange change) {
-                                            ResultSet resultRows = change.getRows();
-                                            QueryRow row;
+                                                   ResultSet resultRows = change.getRows();
+                                            Result row;
                                             List<University> universities = new ArrayList<University>();
                                             // 3. Iterate over changed rows, corresponding documents and map to University POJO
                                             while ((row = resultRows.next()) != null) {
-                                                Document doc = row.getDocument();
-                                                University university = new ObjectMapper().convertValue(doc.toMap(),University.class);
+                                                ObjectMapper objectMapper = new ObjectMapper();
+                                                // Ignore undeclared properties
+                                                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+                                                // Get dictionary corresponding to the database name
+                                                ReadOnlyDictionary valueMap = row.getDictionary(dbMgr.database.getName());
+
+                                                // Convert from dictionary to corresponding University object
+                                                University university = objectMapper.convertValue(valueMap.toMap(),University.class);
                                                 universities.add(university);
                                             }
 
@@ -175,13 +194,18 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
             University university = sampleData.get(index);
 
             // 2. Construct the document from university object
-            HashMap<String,Object> universityMap = new ObjectMapper().convertValue(university,HashMap.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // Ignore undeclared properties
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            HashMap<String,Object> universityMap = objectMapper.convertValue(university,HashMap.class);
             Document doc = new Document(universityMap);
 
             // 3. Save document to database.
             dbMgr.database.save(doc);
         }
-        catch ( NullPointerException e) {
+        catch ( CouchbaseLiteException | NullPointerException e) {
             e.printStackTrace();
         }
 

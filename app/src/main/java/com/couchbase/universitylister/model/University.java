@@ -4,8 +4,7 @@ import java.util.List;
 
 public class University {
     private String name;
-    private String country;
-
+    private  String country;
 
     public University() {
         //
