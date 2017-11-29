@@ -32,6 +32,8 @@ public class DatabaseManager  {
             // Create / Open a database with specified name and configuration
             database = new Database(DATABASE_NAME, config);
 
+
+
         }
         catch (CouchbaseLiteException e) {
             e.printStackTrace();

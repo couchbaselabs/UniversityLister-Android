@@ -138,6 +138,7 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
                                                 // Ignore undeclared properties
                                                 objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+
                                                 // Get dictionary corresponding to the database name
                                                 ReadOnlyDictionary valueMap = row.getDictionary(dbMgr.database.getName());
 
