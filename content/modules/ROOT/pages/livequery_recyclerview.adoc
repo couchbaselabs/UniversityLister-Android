@@ -1,0 +1,252 @@
+:idprefix:
+:idseparator: -
+ifndef::env-site,env-github[]
+:toc: left
+:toclevels: 3
+endif::[]
+
+toc::[]
+
+The https://developer.android.com/reference/android/support/v7/widget/RecyclerView.html[RecyclerView] widget is a popular option on the https://developer.android.com[Android] platform for efficiently displaying dynamic data collections.
+The data items feeding the RecyclerView may change as a result of user's actions or with data fetched from the network.
+As the name indicates, RecyclerViews _recycle_ the views that correspond to the items in the data sets.
+In this post, we discuss how you can use https://developer.couchbase.com/documentation/mobile/2.0/whatsnew.html[Couchbase Lite] as a data source for RecyclerViews in your Android application.
+We will use https://blog.couchbase.com/announcing-couchbase-mobile-2-0-developer-preview/[Couchbase Mobile 2.0] although everything that is discussed here will apply to 1.x versions of Couchbase Mobile as well. 
+
+== Background
+
+The https://developer.couchbase.com/mobile[Couchbase Mobile Platform] comprises of the https://developer.couchbase.com/documentation/mobile/2.0/whatsnew.html[Couchbase Lite] NoSQL embedded database running on clients, the https://developer.couchbase.com/documentation/mobile/1.5/whatsnew.html[Sync Gateway] responsible for data synchronization, data routing and user authentication/authorization and https://developer.couchbase.com/documentation/server/5.0/introduction/whats-new.html[Couchbase Server] for data persistence and management.
+We will only be dealing with Couchbase Lite in our discussions here. 
+
+The post assumes that you are familiar with fundamentals of how to integrate Couchbase Lite into your Android app.
+If you need a refresher or are unfamiliar with getting started with Couchbase Lite on Android, refer to our https://developer.couchbase.com/documentation/mobile/1.4/installation/android/index.html[tutorial site].
+We also assume that you are familiar with the basics of https://developer.android.com[developing apps] on Android and with https://developer.android.com/reference/android/support/v7/widget/RecyclerView.html[RecyclerViews]. 
+
+== Sample App
+
+The sample app that is discussed here is available for dowload from https://github.com/couchbaselabs/UniversityLister-Android.git[Github]. 
+
+[source]
+----
+
+git clone https://github.com/couchbaselabs/UniversityLister-Android.git
+----
+
+The app is very simple.
+It does one thing.
+It displays a list of items in a Recyclerview and Couchbase Lite is used as the data source.
+
+image:http://blog.couchbase.com/wp-content/uploads/2017/08/recycler_view_app.gif[]
+
+Build and run the app in Android Studio.
+Tap on the "ADD UNIVERSITY" button.
+This will result in a new document getting added to the RecyclerView.
+Now let's see how this works. 
+
+== Design
+
+A typical design pattern for using Couchbase Lite as the data source for the RecyclerView in your app is shown below.
+This also corresponds to the way we have implemented it in the sample app. image:http://blog.couchbase.com/wp-content/uploads/2017/08/app_design.png[]
+
+Here are the key elements:
+
+- The _RecyclerView_ is instantiated by the Activity and contains the _Adapter_ .
+- The _Adapter_ is responsible for binding the data items to the view using the __ViewHolder pattern__.
+- _Couchbase Lite_ is the data source for the data items that is used for populating the views.
+- The _Database Manager_ which is a singleton class is used for initialization and management of Couchbase Lite.
+- The Couchbase Lite https://developer.couchbase.com/documentation/mobile/2.0/guides/couchbase-lite/native-api/query/index.html#live-query[Live Query] API for interacting with the database.
+A Couchbase Lite Live Query allows an app to register for changes to the database that affect the results of the query using the `addChangeListener` call. 
+
+This is the sequence - The Activity uses the Couchbase Lite Live Query to query for data items in the database and a listener is registered to handle query data updates.
+Every time the database gets updated with data that affects the query results, the Activity is notified of the changes via the listener callback.
+After retrieving the data from the Couchbase Lite database, the Adapter is notified of the changes.
+The RecyclerView is then updated with the updated data set. 
+
+How the data gets into Couchbase Lite is not important to this discussion.
+In a real world app, the data in Couchbase Lite may be fetched from a remote server or may be updated as a result of the local user's action. 
+
+== App Walkthrough
+
+=== Initialization
+
+Open the `ListActivity.java` file and locate the `onCreate` method.
+This is where all the initialization takes place.
+In addition to the typical content layout initialization, the `DatabaseManager` and the `DataFetcher` objects are instantiated.
+The `RecyclerView` is instantiated with the `UniversityListAdapter` adapter and the appropriate Layout Manager. 
+
+[source]
+----
+
+@Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Initialize couchbase lite database manager
+        dbMgr = new DatabaseManager(this);
+
+        // Set content layout
+        setContentView(R.layout.activity_list);
+
+        // Set toolbar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.university_toolbar);
+        setSupportActionBar(toolbar);
+
+        // Get recycler view
+        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.rvUniversities);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Asynchronously Load the data from local sample file
+        DataFetcher fetcher = new DataFetcher(this,this);
+        fetcher.execute();
+    }
+----
+
+=== Loading Sample Data
+
+Open the `DataFetcher.java` file.
+During Activity Launch, the `DataFetcher` class loads the sample data.
+The loading of data is done on a background thread using ``AsyncTask``. 
+
+[source]
+----
+
+ @Override
+    protected List<University> doInBackground(Void... voids) {
+        String fileName = "university_sample.txt";
+        StringBuilder stringBuilder = new StringBuilder();
+        List<University> universities = null;
+        try {
+            // 1. Load data from local sample data file
+            InputStream inputStream = mContext.getAssets().open(fileName);
+            // 2. use Jackson library to map the JSON to List of University POJO
+            ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            universities = Arrays.asList(mapper.readValue(inputStream, University[].class));
+            return universities;
+        } catch (IOException  e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    protected void onPostExecute(List<University> result) {
+        // 3. Notify the IDataFetchResponse delegate (which in this case is ListActivity) of the availability of data
+        mDelegate.postResult(result);
+
+    }
+----
+
+. The sample data is loaded from the university-sample.txt file in the assets folder. The content is in JSON format.
+. Once the data is read, The JSON data is mapped to corresponding `University` POJO objects using the `Jackson` https://github.com/FasterXML/jackson[library].
+. `ListActivity` is notified of the completion of data load via the `IDataFetchResponse` interface. 
+
+Note: The sample data is _not_ saved into the database at this point.
+It is in an in-memory data structure called `sampleData` in the `ListActivity` class.
+We will see how this sample data is used a little later in the post. 
+
+=== Updating Adapter Data Sets with Couchbase Lite Data
+
+When the Activity is notified that the sample data set has been loaded via the `IDataFetchResponse` interface, it creates a Live Query to fetch documents from the database.
+Open the `ListActivity.java` file and go to the `QueryForListOfUniversities` method. 
+
+[source]
+----
+
+     // 1. Create a liveQuery to fetch all documents from database
+     query = Query.
+            select(SelectResult.all()).
+            from(DataSource.database(dbMgr.database)).
+                toLive();
+
+    // 2. Add a live query listener to continually monitor for changes
+    query.addChangeListener(new LiveQueryChangeListener() {
+          @Override
+            public void changed(LiveQueryChange change) {
+                ResultSet resultRows = change.getRows();
+                QueryRow row;
+                List<University> universities = new ArrayList<University>();
+                // 3. Iterate over changed rows, corresponding documents and map to University POJO
+                while ((row = resultRows.next()) != null) {                              
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        // Ignore undeclared properties
+                        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        // Get dictionary corresponding to the database name
+                        ReadOnlyDictionary valueMap = row.getDictionary(dbMgr.database.getName());
+
+                        // Convert from dictionary to corresponding University object
+                        University university = objectMapper.convertValue(valueMap.toMap(),University.class);
+                        universities.add(university);
+                 }
+
+                  // 4. Update the adapter with the newly added University documents
+                   adapter.setUniversities(universities);
+
+                   runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                        // 5. Notify adapter of changed data
+                        adapter.notifyDataSetChanged();
+                     }
+               });
+        }
+    });
+    // 6. Run Query
+    query.run();
+----
+
+. A LiveQuery is created that fetches all documents from Couchbase Lite database 
+. A listener is registered to listen to all database changes that impact the query 
+. In the listener callback 
+** Iterate over changed rows, and for each row, get the Couchbase `ReadOnlyDictionary` object correponding to the row 
+** Convert from `ReadOnlyDictionary` to University POJO. 
+** Update the adapter with the changed documents 
+. Notify the adapter of the updated data set that will cause the RecyclerView to be reloaded with the updated data 
+. Run the Query 
+
+
+=== Triggering Database Updates
+
+Open the `ListActivity.java` file and go to the `fetchUniversityAndAddToDatabase` method.
+In the section on __Sample Data__, we described how sample data was loaded into an in-memory `sampleData` List data.
+The `fetchUniversityAndAddToDatabase` method is invoked every time the user taps on the "ADD UNIVERSITY" button and is used to insert a data item from the sample data into Couchbase Lite.
+(As mentioned above, in a real world app, the data in Couchbase Lite may be fetched from a remote server or may be updated as a result of the local user's action) 
+
+[source]
+----
+
+ Random r = new Random();
+ int index = r.nextInt(sampleData.size()-1);
+ try {
+        // 1. Get university object at randomly selected index
+        University university = sampleData.get(index);
+
+        // 2. Construct the document from university object
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Ignore undeclared properties
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        HashMap<String,Object> universityMap = objectMapper.convertValue(university,HashMap.class);
+        Document doc = new Document(universityMap);
+
+        // 3. Save document to database.
+        dbMgr.database.save(doc);
+  }
+  catch ( NullPointerException e) {
+       e.printStackTrace();
+  }
+----
+
+. A random row from the `sampleData` List of `University` objects is selected 
+. The `Universty` object is converted to Couchbase Lite `Document` using Jackson library 
+. The `Document` is inserted into the database. This insertion triggers the LiveQuery listener to be invoked. 
+
+
+== Resources
+
+That's it! That's all that's needed to get Couchbase Lite's Live Queries to work with RecyclerViews.
+We have used Couchbase Lite V2.0 in our example but everything that's discussed here applies to V1.x as well.
+Refer to the https://developer.couchbase.com/documentation/mobile/2.0/whatsnew.html[developer portal] to learn more about Couchbase Mobile APIs. 
+
+If you have questions or feedback, please leave a comment below or feel free to reach out to me at Twitter @rajagp or email me mailto:priya.rajagopal@couchbase.com[]. The https://forums.couchbase.com[Couchbase Forums] are another good place to reach out with questions.
