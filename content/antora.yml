@@ -1,0 +1,6 @@
+name: universitylister-android
+title: UniversityLister-Android
+version: 'current'
+start_page: ROOT:livequery_recyclerview.adoc
+nav:
+- modules/docs/nav.adoc
