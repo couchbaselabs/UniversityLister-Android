@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.couchbase.universitylister"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -26,7 +26,7 @@ android {
     }
 }
 def SUPPORT_LIBRARY_VERSION = "26.0.0-beta2"
-def COUCHBASE_LITE_VERSION = "2.0.0-DB020"
+def COUCHBASE_LITE_VERSION = "2.0.0"
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])

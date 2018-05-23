@@ -27,7 +27,7 @@ public class DatabaseManager  {
             // Set Database configuration
             DatabaseConfiguration config = new DatabaseConfiguration(context);
             File dir = context.getDir("CBL",Context.MODE_PRIVATE);
-            config.setDirectory(dir);
+            config.setDirectory(dir.toString());
 
             // Create / Open a database with specified name and configuration
             database = new Database(DATABASE_NAME, config);

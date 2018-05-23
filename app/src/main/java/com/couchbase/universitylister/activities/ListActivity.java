@@ -15,11 +15,11 @@ import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.DataSource;
 import com.couchbase.lite.Dictionary;
 import com.couchbase.lite.Document;
-import com.couchbase.lite.LiveQuery;
-import com.couchbase.lite.LiveQueryChange;
-import com.couchbase.lite.LiveQueryChangeListener;
+import com.couchbase.lite.MutableDocument;
 import com.couchbase.lite.Query;
-import com.couchbase.lite.ReadOnlyDictionary;
+import com.couchbase.lite.QueryBuilder;
+import com.couchbase.lite.QueryChange;
+import com.couchbase.lite.QueryChangeListener;
 import com.couchbase.lite.Result;
 import com.couchbase.lite.ResultSet;
 import com.couchbase.lite.Expression;
@@ -47,7 +47,7 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
     private static DatabaseManager dbMgr ;
     private List<University> sampleData = null; // Used to hold sample JSON data
     private final UniversityListAdapter adapter = new UniversityListAdapter(this);
-    private LiveQuery query;
+    private Query query;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,16 +120,15 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
 
 
             // 1. Create a liveQuery to fetch all documents from database
-            query = Query.
+            query = QueryBuilder.
                     select(SelectResult.all()).
-                    from(DataSource.database(dbMgr.database)).
-                    toLive();
+                    from(DataSource.database(dbMgr.database));
 
             // 2. Add a live query listener to continually monitor for changes
-            query.addChangeListener(new LiveQueryChangeListener() {
+            query.addChangeListener(new QueryChangeListener() {
                                         @Override
-                                        public void changed(LiveQueryChange change) {
-                                                   ResultSet resultRows = change.getRows();
+                                        public void changed(QueryChange change) {
+                                            ResultSet resultRows = change.getResults();
                                             Result row;
                                             List<University> universities = new ArrayList<University>();
                                             // 3. Iterate over changed rows, corresponding documents and map to University POJO
@@ -140,7 +139,7 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
 
 
                                                 // Get dictionary corresponding to the database name
-                                                ReadOnlyDictionary valueMap = row.getDictionary(dbMgr.database.getName());
+                                                Dictionary valueMap = row.getDictionary(dbMgr.database.getName());
 
                                                 // Convert from dictionary to corresponding University object
                                                 University university = objectMapper.convertValue(valueMap.toMap(),University.class);
@@ -162,10 +161,12 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
                                     }
             );
             // 6. Run Query
-            query.run();
+            query.execute();
         }
         catch (IllegalArgumentException e) {
 
+        } catch (CouchbaseLiteException e) {
+            e.printStackTrace();
         }
     }
 
@@ -201,7 +202,7 @@ public class ListActivity extends AppCompatActivity implements IDataFetchRespons
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             HashMap<String,Object> universityMap = objectMapper.convertValue(university,HashMap.class);
-            Document doc = new Document(universityMap);
+            MutableDocument doc = new MutableDocument(universityMap);
 
             // 3. Save document to database.
             dbMgr.database.save(doc);
