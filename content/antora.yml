@@ -1,6 +1,3 @@
-name: tutorials/universitylister-android
+name: tutorials
 title: UniversityLister-Android
-version: 'current'
-start_page: ROOT:livequery_recyclerview.adoc
-nav:
-- modules/docs/nav.adoc
+version: 'master'
