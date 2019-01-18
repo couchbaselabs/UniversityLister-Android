@@ -1,3 +1,4 @@
+= Using Couchbase Lite with Recycler Views
 :idprefix:
 :idseparator: -
 ifndef::env-site,env-github[]
