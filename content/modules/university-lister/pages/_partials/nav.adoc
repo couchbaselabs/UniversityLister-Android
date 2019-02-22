@@ -1,1 +1,1 @@
-* xref:university-lister:android.adoc[Android]
+** xref:university-lister:android.adoc[Android]
