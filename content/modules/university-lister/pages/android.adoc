@@ -59,7 +59,7 @@ The app does the following -
 * It displays a list of "university" items in a `Recyclerview` with `Couchbase Lite` as the data source. 
 * Every time a "University" entry is added to the Couchbase Lite database, the RecyclerView displaying the university items is automatically updated to include the newly added item
 
-image:http://blog.couchbase.com/wp-content/uploads/2017/08/recycler_view_app.gif[]
+image:recycler_view_app.gif[]
 
 == Try It Out
 
@@ -73,7 +73,9 @@ Now let's see how this works.
 
 A typical design pattern for using Couchbase Lite as the data source for the RecyclerView in your app is shown below.
 
-This also corresponds to the way we have implemented it in the sample app. image:http://blog.couchbase.com/wp-content/uploads/2017/08/app_design.png[]
+This also corresponds to the way we have implemented it in the sample app.
+
+image:app_design.png[]
 
 Here are the key elements:
 
