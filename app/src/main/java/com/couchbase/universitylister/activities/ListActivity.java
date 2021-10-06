@@ -1,15 +1,16 @@
 package com.couchbase.universitylister.activities;
 
+import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.DataSource;
@@ -21,10 +22,10 @@ import com.couchbase.lite.QueryBuilder;
 import com.couchbase.lite.QueryChange;
 import com.couchbase.lite.QueryChangeListener;
 import com.couchbase.lite.Result;
-import com.couchbase.lite.ResultSet;
 import com.couchbase.lite.Expression;
 import com.couchbase.lite.Ordering;
 import com.couchbase.lite.Query;
+import com.couchbase.lite.ResultSet;
 import com.couchbase.lite.SelectResult;
 import com.couchbase.universitylister.R;
 import com.couchbase.universitylister.adapter.UniversityListAdapter;
@@ -35,12 +36,12 @@ import com.couchbase.universitylister.model.University;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
+
 
 public class ListActivity extends AppCompatActivity implements IDataFetchResponse {
 
