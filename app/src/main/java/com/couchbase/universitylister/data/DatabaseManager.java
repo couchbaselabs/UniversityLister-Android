@@ -6,6 +6,7 @@ package com.couchbase.universitylister.data;
 
 import android.content.Context;
 
+import com.couchbase.lite.CouchbaseLite;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.DatabaseConfiguration;
@@ -23,9 +24,9 @@ public class DatabaseManager  {
 
         // Set database configuration
         try {
-
+            CouchbaseLite.init(context);
             // Set Database configuration
-            DatabaseConfiguration config = new DatabaseConfiguration(context);
+            DatabaseConfiguration config = new DatabaseConfiguration();
             File dir = context.getDir("CBL",Context.MODE_PRIVATE);
             config.setDirectory(dir.toString());
 
